@@ -1,0 +1,104 @@
+{% assign cartTotal = cart.total_price %}
+{% if cartTotal < 10000 %}
+    <div class="free-shipping" {% if cartTotal <= 0 %}style="display:none;"{% endif%}>
+        {% assign remaining = 10000 | minus: cartTotal %}
+        <p>Add <span>{{ remaining | money }}</span> more to earn <span>FREE SHIPPING!</span></p>
+    </div>
+{% else %}
+    <div class="free-shipping free-ship-success">
+        <p>Congrats! You've earned <span>FREE SHIPPING!</span></p>
+    </div>
+{% endif %}
+<style>
+    div.cart_content > form {
+        margin-top: 0;
+    }
+
+    .free-shipping {
+        padding: 15px 20px;
+        background-color: #F5F5F5;
+        border-top: 1px solid #cccccc;
+    }
+
+    .free-shipping.free-ship-success {
+        background-color: #ECEFF6;
+    }
+
+    .free-shipping > p {
+        margin-bottom: 0;
+        font-size: 16px;
+        font-family: Raleway;
+        text-align: center;
+    }
+
+    .free-shipping > p > span {
+        font-weight: bold;
+    }
+
+    #header div.free-shipping > p {
+        font-size: 14px;
+    }
+    
+    html.touchevents a.cart_content__continue-shopping.secondary_button {
+        display: none;
+    }
+
+    @media(max-width: 798px){
+        .free-shipping {
+            border-top: none;
+        }
+    }
+</style>
+
+<script>
+    // FREE SHIPPING CALCULATOR
+    const cartSubTotal = '#desktop-header .cart_content .cart_subtotal';
+    const subTotalReady = (elem, callback) => {
+        let loaded = setInterval(() => {
+        if ( document.querySelectorAll(elem).length ) {
+            clearInterval(loaded);
+            callback();
+        }
+        }, 100);
+    }
+
+    subTotalReady(cartSubTotal, () => {
+        // RUN CALC WHEN POPUP SUBTOTAL CHANGES
+        const mCallback = (mutations) => {
+            let subStr = document.querySelector('#desktop-header .cart_content .cart_subtotal .money').innerHTML,
+                subNum = +subStr.replace('$', ''),
+                remNum = 100 - subNum;
+                freeShips = document.querySelectorAll('.free-shipping');
+
+            freeShips.forEach((el, i) => {
+                // Display requirement for free shipping if between $1 and $99 in cart 
+                if ( subNum > 0 && subNum < 100 ) {
+                    el.classList.remove('free-ship-success');
+                    el.style.display = 'block';
+                    el.querySelector('p').innerHTML = `Add <span>$${remNum.toFixed(2)}</span> more to earn <span>FREE SHIPPING!</span>`;
+                }
+                // If they have $100 or more in cart display free shipping message
+                else if ( subNum >= 100 ) {
+                    el.classList.add('free-ship-success');
+                    el.style.display = 'block';
+                    el.querySelector('p').innerHTML = `Congrats! You've earned <span>FREE SHIPPING!</span>`;
+                }
+                // If cart is empty do not display
+                else {
+                    el.style.display = 'none';
+                }
+            });
+        }
+
+        // MUTATION OBSERVER
+        let mList = document.querySelector(cartSubTotal),
+            options = {
+                attributes: true,
+                childList: true,
+                subtree: true
+            },
+            observer = new MutationObserver(mCallback);
+
+        observer.observe(mList, options);
+    });
+</script>
